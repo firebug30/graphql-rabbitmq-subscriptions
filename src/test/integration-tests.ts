@@ -7,7 +7,7 @@ import {
   parse,
   GraphQLSchema,
   GraphQLObjectType,
-  GraphQLString,
+  GraphQLString
 } from 'graphql';
 import { isAsyncIterable } from 'iterall';
 import { subscribe } from 'graphql/subscription';
@@ -29,11 +29,11 @@ function buildSchema(iterator) {
       fields: {
         testString: {
           type: GraphQLString,
-          resolve: function (_, args) {
+          resolve: function(_, args) {
             return 'works';
-          },
-        },
-      },
+          }
+        }
+      }
     }),
     subscription: new GraphQLObjectType({
       name: 'Subscription',
@@ -43,14 +43,14 @@ function buildSchema(iterator) {
           subscribe: withFilter(() => iterator, () => true),
           resolve: root => {
             return 'FIRST_EVENT';
-          },
-        },
-      },
-    }),
+          }
+        }
+      }
+    })
   });
 }
 
-describe('PubSubAsyncIterator', function () {
+describe('PubSubAsyncIterator', function() {
   const query = parse(`
     subscription S1 {
       testSubscription
@@ -63,6 +63,11 @@ describe('PubSubAsyncIterator', function () {
   const returnSpy = mock(origIterator, 'return');
   const schema = buildSchema(origIterator);
   const results = subscribe(schema, query);
+
+  beforeEach(() => {
+    // tslint:disable-next-line:no-unused-expression
+    expect(isAsyncIterable(results)).to.be.true;
+  });
 
   it('should allow subscriptions', () => {
     // tslint:disable-next-line:no-unused-expression
@@ -82,9 +87,14 @@ describe('PubSubAsyncIterator', function () {
 
     pubsub.publish(FIRST_EVENT, {});
 
-    results.return()
-      .then(res => {
-        expect(returnSpy.callCount).to.be.gte(1);
-      });
+    results.return().then(res => {
+      expect(returnSpy.callCount).to.be.gte(1);
+    });
+  });
+
+  it('should allow string or object for subscription key', () => {
+    pubsub.subscribe({ name: 'Name', dlx: 'DLX', dlq: 'DLQ' }, data => {
+      expect(data).to.be.true;
+    });
   });
 });
