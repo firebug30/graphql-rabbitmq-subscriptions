@@ -22,9 +22,9 @@ function buildSchema(iterator) {
                     type: graphql_1.GraphQLString,
                     resolve: function (_, args) {
                         return 'works';
-                    },
-                },
-            },
+                    }
+                }
+            }
         }),
         subscription: new graphql_1.GraphQLObjectType({
             name: 'Subscription',
@@ -34,10 +34,10 @@ function buildSchema(iterator) {
                     subscribe: graphql_subscriptions_1.withFilter(function () { return iterator; }, function () { return true; }),
                     resolve: function (root) {
                         return 'FIRST_EVENT';
-                    },
-                },
-            },
-        }),
+                    }
+                }
+            }
+        })
     });
 }
 describe('PubSubAsyncIterator', function () {
@@ -48,6 +48,9 @@ describe('PubSubAsyncIterator', function () {
     var returnSpy = simple_mock_1.mock(origIterator, 'return');
     var schema = buildSchema(origIterator);
     var results = subscription_1.subscribe(schema, query);
+    beforeEach(function () {
+        expect(iterall_1.isAsyncIterable(results)).to.be.true;
+    });
     it('should allow subscriptions', function () {
         expect(iterall_1.isAsyncIterable(results)).to.be.true;
         var r = results.next();
@@ -59,9 +62,13 @@ describe('PubSubAsyncIterator', function () {
     it('should clear event handlers', function () {
         expect(iterall_1.isAsyncIterable(results)).to.be.true;
         pubsub.publish(FIRST_EVENT, {});
-        results.return()
-            .then(function (res) {
+        results.return().then(function (res) {
             expect(returnSpy.callCount).to.be.gte(1);
+        });
+    });
+    it('should allow string or object for subscription key', function () {
+        pubsub.subscribe({ name: 'Name', dlx: 'DLX', dlq: 'DLQ' }, function (data) {
+            expect(data).to.be.true;
         });
     });
 });

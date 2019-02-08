@@ -1,5 +1,5 @@
 import { PubSubEngine } from 'graphql-subscriptions/dist/pubsub-engine';
-import { IRabbitMqConnectionConfig } from 'rabbitmq-pub-sub';
+import { IRabbitMqConnectionConfig, IQueueNameConfig } from 'rabbitmq-pub-sub';
 import * as Logger from 'bunyan';
 export interface PubSubRabbitMQBusOptions {
     config?: IRabbitMqConnectionConfig;
@@ -18,11 +18,11 @@ export declare class AmqpPubSub implements PubSubEngine {
     private logger;
     constructor(options?: PubSubRabbitMQBusOptions);
     publish(trigger: string, payload: any): Promise<void>;
-    subscribe(trigger: string, onMessage: Function, options?: Object): Promise<number>;
+    subscribe(trigger: string | IQueueNameConfig, onMessage: Function, options?: Object): Promise<number>;
     unsubscribe(subId: number): void;
     asyncIterator<T>(triggers: string | string[]): AsyncIterator<T>;
     private onMessage;
 }
 export declare type Path = Array<string | number>;
-export declare type Trigger = string | Path;
+export declare type Trigger = string | IQueueNameConfig | Path;
 export declare type TriggerTransform = (trigger: Trigger, channelOptions?: Object) => string;

@@ -7,7 +7,14 @@ var child_logger_1 = require("./child-logger");
 var AmqpPubSub = (function () {
     function AmqpPubSub(options) {
         if (options === void 0) { options = {}; }
-        this.triggerTransform = options.triggerTransform || (function (trigger) { return trigger; });
+        this.triggerTransform =
+            options.triggerTransform ||
+                (function (trigger) {
+                    return typeof trigger === rabbitmq_pub_sub_1.IQueueNameConfig
+                        ? (trigger.name || '*') + "." + (trigger.dlq || 'DLQ') + "." + (trigger.dlx ||
+                            'Exchange')
+                        : trigger;
+                });
         var config = options.config || { host: '127.0.0.1', port: 5672 };
         var logger = options.logger;
         this.logger = child_logger_1.createChildLogger(logger, 'AmqpPubSub');
@@ -38,12 +45,16 @@ var AmqpPubSub = (function () {
         else {
             return new Promise(function (resolve, reject) {
                 _this.logger.trace("trying to subscribe to queue '%s'", triggerName);
-                _this.consumer.subscribe(triggerName, function (msg) { return _this.onMessage(triggerName, msg); })
+                _this.consumer
+                    .subscribe(triggerName, function (msg) { return _this.onMessage(triggerName, msg); })
                     .then(function (disposer) {
-                    _this.subsRefsMap[triggerName] = (_this.subsRefsMap[triggerName] || []).concat([id]);
+                    _this.subsRefsMap[triggerName] = (_this.subsRefsMap[triggerName] || []).concat([
+                        id
+                    ]);
                     _this.unsubscribeChannelMap[id] = disposer;
                     return resolve(id);
-                }).catch(function (err) {
+                })
+                    .catch(function (err) {
                     _this.logger.error(err, "failed to recieve message from queue '%s'", triggerName);
                     reject(id);
                 });
@@ -61,9 +72,11 @@ var AmqpPubSub = (function () {
         var newRefs;
         if (refs.length === 1) {
             newRefs = [];
-            this.unsubscribeChannelMap[subId]().then(function () {
+            this.unsubscribeChannelMap[subId]()
+                .then(function () {
                 _this.logger.trace("cancelled channel from subscribing to queue '%s'", triggerName);
-            }).catch(function (err) {
+            })
+                .catch(function (err) {
                 _this.logger.error(err, "channel cancellation failed from queue '%j'", triggerName);
             });
         }
